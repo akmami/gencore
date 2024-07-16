@@ -1,0 +1,9 @@
+#ifndef CONSTANT_H
+#define CONSTANT_H
+
+#define BUFFERSIZE 100000
+#define THREAD_NUMBER 8
+#define MERGE_CORE_THRESHOLD 200
+#define LCP_LEVEL 7
+
+#endif
