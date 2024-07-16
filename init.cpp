@@ -64,8 +64,8 @@ args& parse(int argc, char **argv) {
     index++;
     arguments.infilename2 = filename2;
 
-    arguments.thread_number = THREAD_NUMBER;
-    arguments.lcp_level = 7;
+    arguments.threadNumber = THREAD_NUMBER;
+    arguments.lcpLevel = 7;
 
     while ( index < argc ) {
         if( strcmp(argv[index], "-t") == 0 ) {
@@ -75,8 +75,8 @@ args& parse(int argc, char **argv) {
                 exit(1);
             }
             try {
-                arguments.thread_number = std::stoi(argv[index]);
-                if ( arguments.thread_number <= 0 ) {
+                arguments.threadNumber = std::stoi(argv[index]);
+                if ( arguments.threadNumber <= 0 ) {
                     throw std::invalid_argument("Invalid thread number");
                 }
             } catch (const std::invalid_argument& e) {
@@ -91,8 +91,8 @@ args& parse(int argc, char **argv) {
                 exit(1);
             }
             try {
-                arguments.lcp_level = std::stoi(argv[index]);
-                if ( arguments.lcp_level < 0 ) {
+                arguments.lcpLevel = std::stoi(argv[index]);
+                if ( arguments.lcpLevel < 0 ) {
                     throw std::invalid_argument("Invalid LCP level");
                 }
             } catch ( const std::invalid_argument& e) {
