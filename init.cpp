@@ -4,48 +4,61 @@
 void printUsage() {
     std::cout << "Usage: ./gencore [OPTIONS] [FILES]" << std::endl << std::endl;
     std::cout << "Options:" << std::endl;
-    std::cout << "  -r              Read cores from specified files" << std::endl;
+    std::cout << "  -r              Read cores from specified files (read mode)" << std::endl;
     std::cout << "                  Usage: ./gencore -r file1.cores file2.cores" << std::endl << std::endl;
-    std::cout << "  -w [fa|fq|bam]  Write cores to specified files in the given format" << std::endl;
+    std::cout << "  [fa|fq|bam]     Execute program with specified files in the given format" << std::endl;
     std::cout << "                  Supported formats:" << std::endl;
-    std::cout << "                    fa   Write cores to .fa files" << std::endl;
-    std::cout << "                    fq   Write cores to .fq.gz files" << std::endl;
-    std::cout << "                    bam  Write cores to .bam files" << std::endl;
-    std::cout << "                  Usage: ./gencore -w fa file1.fa file2.fa" << std::endl;
-    std::cout << "                         ./gencore -w fq file1.fq.gz file2.fq.gz" << std::endl;
-    std::cout << "                         ./gencore -w bam file1.bam file2.bam" << std::endl << std::endl;
+    std::cout << "                    fa   Read from .fa files" << std::endl;
+    std::cout << "                    fq   Read from .fq.gz files" << std::endl;
+    std::cout << "                    bam  read from .bam files" << std::endl;
+    std::cout << "                  Usage: ./gencore fa ref1.fa ref2.fa" << std::endl;
+    std::cout << "                         ./gencore fq reads1.fq.gz reads2.fq.gz" << std::endl;
+    std::cout << "                         ./gencore bam aln1.bam aln2.bam" << std::endl << std::endl;
     std::cout << "  -l [level]      Set lcp-level" << std::endl;
-    std::cout << "                  Usage: ./gencore -l level" << std::endl << std::endl;
+    std::cout << "                  Default: 4" << std::endl;
+    std::cout << "                  Usage: ./gencore fa ref1.fa ref2.fa -l 4" << std::endl << std::endl;
     std::cout << "  -t [number]     Set number of threads" << std::endl;
-    std::cout << "                  Usage: ./gencore -t number" << std::endl << std::endl;
+    std::cout << "                  Default: 8" << std::endl;
+    std::cout << "                  Only works when program is run with fq flag" << std::endl;
+    std::cout << "                  Usage: ./gencore fq reads1.fq.gz reads2.fq.gz -t 4" << std::endl << std::endl;
+    std::cout << "  -w [filenames]  Store cores processed from input files." << std::endl;
+    std::cout << "                  Only works when program is not run with read mode" << std::endl;
+    std::cout << "                  Usage: ./gencore fa reads1.fq.gz reads2.fq.gz -w reads1.cores,reads2.cores" << std::endl << std::endl;
 };
 
 
-args& parse(int argc, char **argv) {
+void parse(int argc, char **argv, args& arguments) {
 
-    if ( argc < 3 ) {
-        std::cerr << "Usage: program [-r|-w] <filename1> <filename2> [-t <thread_number>] [-l <lcp_level>]" << std::endl;
+    if ( argc < 4 ) {
+        printUsage();
         exit(1);
     }
-
-    args arguments;
 
     int index = 1;
     arguments.readCores = false;
     arguments.writeCores = false;
-    if ( strcmp(argv[1], "-r") == 0 ) {
+    
+    if ( strcmp(argv[index], "-r") == 0 ) {
         arguments.readCores = true;
         index++;
-    } else if ( strcmp(argv[1], "-w") == 0 ) {
-        arguments.writeCores = true;
-        index++;
+    }
+
+    if (!arguments.readCores) {
         if (index >= argc) {
-            std::cerr << "Error: Missing output filename." << std::endl;
+            std::cerr << "Error: Missing program mode." << std::endl;
             exit(1);
         }
-        std::string outfilename(argv[index]);
+        if ( strcmp(argv[index], "fa") == 0 ) {
+            arguments.mode = FA;
+        } else if ( strcmp(argv[index], "fq") == 0 ) {
+            arguments.mode = FQ;
+        } else if ( strcmp(argv[index], "bam") == 0 ) {
+            arguments.mode = BAM;
+        } else {
+            std::cerr << "Error: Invalid mode provided." << std::endl;
+            exit(1);
+        }
         index++;
-        arguments.outfilename = outfilename;
     }
 
     if (index >= argc) {
@@ -100,11 +113,30 @@ args& parse(int argc, char **argv) {
                 exit(1);
             }
             index++;
-        } else {
+        } else if( strcmp(argv[index], "-w") == 0 ) {
+            index++;
+            if ( index >= argc ) {
+                std::cerr << "Error: Missing output files names." << std::endl;
+                exit(1);
+            }
+            try {
+                std::stringstream ss(argv[index]);
+                if (!std::getline(ss, arguments.outfilename1, ',')) {
+                    throw std::invalid_argument("Failed to read the first part of the string.");
+                }
+                if (!std::getline(ss, arguments.outfilename1, ',')) {
+                    throw std::invalid_argument("Failed to read the second part of the string.");
+                }
+            } catch ( const std::invalid_argument& e) {
+                std::cerr << "Error: Could not parse output filenames." << std::endl;
+                exit(1);
+            }
+            index++;
+        }
+        
+        else {
             std::cerr << "Invalid option provided: " << argv[index] << std::endl;
             index++;
         }
     }
-
-    return arguments;
 }

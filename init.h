@@ -1,12 +1,17 @@
 #ifndef INIT_H
 #define INIT_H
 
+#include <sstream>
 #include <cstring>
 #include <iostream>
 #include "args.h"
-#include "constant.h"
+#include "program_mode.h"
+
+#ifndef THREAD_NUMBER
+#define THREAD_NUMBER 8
+#endif
 
 void printUsage();
-args& parse(int argc, char **argv);
+void parse(int argc, char **argv, args& arguments);
 
 #endif
