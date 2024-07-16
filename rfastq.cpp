@@ -1,6 +1,8 @@
 #include "rfastq.h"
 
 
+std::mutex results_mutex; // mutex for protecting access to the results vector
+
 /**
  * @brief Processes genomic reads from a queue, extracts LCP cores, and aggregates results in a shared vector.
  *

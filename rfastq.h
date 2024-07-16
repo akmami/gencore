@@ -8,11 +8,16 @@
 #include <string>
 #include "lps.h"
 #include "helper.h"
-#include "constant.h"
 #include "utils/GzFile.hpp"
 #include "utils/ThreadSafeQueue.hpp"
 
-std::mutex results_mutex; // mutex for protecting access to the results vector
+#ifndef BUFFERSIZE
+#define BUFFERSIZE      100000
+#endif
+
+#ifndef MERGE_CORE_THRESHOLD
+#define MERGE_CORE_THRESHOLD 200
+#endif
 
 struct Task {
     std::string read;
