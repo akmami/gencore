@@ -1,5 +1,4 @@
 #include "rfasta.h"
-#include "constant.h"
 
 
 void flatten(std::vector<lcp::lps*>& strs, std::vector<uint>& lcp_cores) {
