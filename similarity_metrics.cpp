@@ -1,7 +1,6 @@
 #include "similarity_metrics.h"
 
 
-
 /**
  * @brief Populates vectors with unique LCP cores and their counts from a sorted vector of LCP cores.
  *
@@ -57,6 +56,7 @@ void fillValuesAndCounts( std::vector<uint>& lcp_cores, std::vector<size_t>& uni
 void generateMinhashSignature( std::vector<uint>& hash_values ) {
     std::sort(hash_values.begin(), hash_values.end());
 };
+
 
 /**
  * @brief Calculates the intersection and union sizes between two sets of hashed LCP cores.
