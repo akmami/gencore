@@ -3,7 +3,10 @@
 
 #include <string>
 #include <algorithm>
-#include "constant.h"
+
+#ifndef BUFFERSIZE
+#define BUFFERSIZE      100000
+#endif
 
 bool process( char *str );
 bool process( std::string& str );
