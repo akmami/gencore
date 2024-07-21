@@ -12,8 +12,8 @@ struct args {
     bool writeCores;
     std::string outfilename1;
     std::string outfilename2;
-    int threadNumber;
-    int lcpLevel;
+    size_t threadNumber;
+    size_t lcpLevel;
 };
 
 #endif
