@@ -80,17 +80,16 @@ void process_read( ThreadSafeQueue<Task>& task_queue, std::vector<uint>& lcp_cor
  * @param total_length Reference to a variable that will hold the combined length of all reads.
  * @param thread_number The number of worker threads to use for processing.
  */
-void read_fastq( const char* filename, GzFile& infile, int lcp_level, std::vector<uint>& lcp_cores, size_t& read_count, size_t& total_length, size_t thread_number ) {
-    
-    read_count = 0;
-    total_length = 0;
+void read_fastq( std::string filename, args& arguments, std::vector<uint>& lcp_cores ) {
+
+    GzFile infile( filename.c_str(), "rb" );
 
     ThreadSafeQueue<Task> task_queue;
     std::vector<std::thread> workers;
 
     // start worker threads
-    for (size_t i = 0; i < thread_number; ++i) {
-        workers.emplace_back(process_read, std::ref(task_queue), std::ref(lcp_cores), lcp_level);
+    for (size_t i = 0; i < arguments.threadNumber; ++i) {
+        workers.emplace_back(process_read, std::ref(task_queue), std::ref(lcp_cores), arguments.lcpLevel);
     }
 
     std::cout << "Processing is started for " << filename << std::endl;
@@ -104,7 +103,7 @@ void read_fastq( const char* filename, GzFile& infile, int lcp_level, std::vecto
     sequence.reserve(BUFFERSIZE);
 
     while (true) {
-        if ( infile.gets(buffer, BUFFERSIZE) == Z_NULL) {
+        if ( infile.gets(buffer) == Z_NULL) {
             // End of file or an error
             if ( ! infile.eof() ) {
                 std::cerr << "Error reading file." << std::endl;
@@ -112,7 +111,7 @@ void read_fastq( const char* filename, GzFile& infile, int lcp_level, std::vecto
             break;
         }
 
-        infile.gets(buffer, BUFFERSIZE);
+        infile.gets(buffer);
         sequence.append(buffer);
 
         while ( !task_queue.isAvailable() );
@@ -122,11 +121,8 @@ void read_fastq( const char* filename, GzFile& infile, int lcp_level, std::vecto
         task.read = std::string(buffer);
         task_queue.push(task);
 
-        read_count++;
-        total_length += task.read.size();
-
-        infile.gets(buffer, BUFFERSIZE);
-        infile.gets(buffer, BUFFERSIZE);
+        infile.gets(buffer);
+        infile.gets(buffer);
     }
 
     task_queue.markFinished();
