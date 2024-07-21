@@ -10,7 +10,7 @@ void flatten(std::vector<lcp::lps*>& strs, std::vector<uint>& lcp_cores) {
 };
 
 
-void read_fasta(std::string filename, std::vector<uint>& lcp_cores) {
+void read_fasta(std::string filename, args& arguments, std::vector<uint>& lcp_cores) {
     
     std::fstream file;
     file.open(filename, std::ios::in);
@@ -37,7 +37,7 @@ void read_fasta(std::string filename, std::vector<uint>& lcp_cores) {
                 
                     lcp::lps* str = new lcp::lps(sequence);
                     
-                    for ( int i = 1; i < LCP_LEVEL; i++ ) {
+                    for ( size_t i = 1; i < arguments.lcpLevel; i++ ) {
 
                         str->deepen();
                     }

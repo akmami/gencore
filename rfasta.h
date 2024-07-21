@@ -5,11 +5,10 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include "args.h"
 #include "lps.h"
 
-#define LCP_LEVEL 7
-
 void flatten(std::vector<lcp::lps*>& strs, std::vector<uint>& lcp_cores);
-void read_fasta(std::string filename, std::vector<uint>& lcp_cores);
+void read_fasta(std::string filename, args& arguments, std::vector<uint>& lcp_cores);
 
 #endif
