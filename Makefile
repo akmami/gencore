@@ -26,6 +26,9 @@ chtslib.o: chtslib.cpp
 rbam.o: rbam.cpp
 	$(GXX) $(CXXFLAGS) $(HTSLIB_CXXFLAGS) -c $< -o $@ $(LCPTOOLS_LIBS)
 
+gencore.o: gencore.cpp
+	$(GXX) $(CXXFLAGS) $(HTSLIB_CXXFLAGS) -c $< -o $@ $(LCPTOOLS_LIBS)
+
 rfasta.o: rfasta.cpp
 	$(GXX) $(CXXFLAGS) -c $< -o $@ $(LCPTOOLS_LIBS)
 
