@@ -104,10 +104,10 @@ void parse(int argc, char **argv, args& arguments) {
                 exit(1);
             }
             try {
-                arguments.lcpLevel = std::stoi(argv[index]);
-                if ( arguments.lcpLevel < 0 ) {
+                if ( std::stoi(argv[index]) < 0 ) {
                     throw std::invalid_argument("Invalid LCP level");
                 }
+                arguments.lcpLevel = std::stoi(argv[index]);
             } catch ( const std::invalid_argument& e) {
                 std::cerr << "Error: Invalid LCP level provided." << std::endl;
                 exit(1);
