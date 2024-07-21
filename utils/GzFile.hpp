@@ -26,7 +26,7 @@
 #include <zlib.h>
 
 #ifndef BUFFERSIZE
-#define BUFFERSIZE      100000
+#define BUFFERSIZE      500000
 #endif
 
 
@@ -46,8 +46,8 @@ public:
     }
 
     // Wrapper method for gzgets
-    char* gets(char* buffer, int len) {
-        return gzFile_ ? gzgets(gzFile_, buffer, len) : Z_NULL;
+    char* gets(char* buffer) {
+        return gzFile_ ? gzgets(gzFile_, buffer, BUFFERSIZE) : Z_NULL;
     }
 
     // Rewind file
