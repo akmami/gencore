@@ -8,6 +8,7 @@
 #include <string>
 #include "args.h"
 #include "lps.h"
+#include "similarity_metrics.h"
 #include "helper.h"
 #include "utils/GzFile.hpp"
 #include "utils/ThreadSafeQueue.hpp"

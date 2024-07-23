@@ -134,4 +134,5 @@ void read_fastq( std::string filename, args& arguments, std::vector<uint>& lcp_c
         }
     }
 
+    generateMinhashSignature(lcp_cores);
 };
