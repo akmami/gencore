@@ -1,28 +1,10 @@
 #include "rfasta.h"
 
 
-void flatten(std::vector<lcp::lps*>& strs, std::vector<uint>& lcp_cores) {
-    
-    size_t size = 0;
-    
-    for(std::vector<lcp::lps*>::iterator it_str = strs.begin(); it_str != strs.end(); it_str++) {
-        size += (*it_str)->cores.size();
-    }
-
-    lcp_cores.reserve(size);
-
-    for(std::vector<lcp::lps*>::iterator it_str = strs.begin(); it_str != strs.end(); it_str++) {
-        for ( std::vector<lcp::core*>::iterator it_lcp = (*it_str)->cores.begin(); it_lcp != (*it_str)->cores.end(); it_lcp++ ) {
-            lcp_cores.push_back( (*it_lcp)->label );
-        }
-    }
-};
-
-
-void read_fasta(std::string filename, args& arguments, std::vector<uint>& lcp_cores) {
+void read_fasta( args& arguments ) {
     
     std::fstream file;
-    file.open(filename, std::ios::in);
+    file.open( arguments.infilename, std::ios::in );
 
     int chrom_index = 0;
     std::string line;
@@ -72,7 +54,11 @@ void read_fasta(std::string filename, args& arguments, std::vector<uint>& lcp_co
         file.close();
     }
     
-    flatten(strs, lcp_cores);
+    flatten(strs, arguments.lcp_cores);
 
-    generateMinhashSignature(lcp_cores);
+    if ( arguments.writeCores ) {
+        // write to file
+    }
+
+    generateMinhashSignature(arguments.lcp_cores);
 };

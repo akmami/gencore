@@ -80,19 +80,19 @@ void process_read( ThreadSafeQueue<Task>& task_queue, std::vector<uint>& lcp_cor
  * @param total_length Reference to a variable that will hold the combined length of all reads.
  * @param thread_number The number of worker threads to use for processing.
  */
-void read_fastq( std::string filename, args& arguments, std::vector<uint>& lcp_cores ) {
+void read_fastq( args& arguments ) {
 
-    GzFile infile( filename.c_str(), "rb" );
+    GzFile infile( arguments.infilename.c_str(), "rb" );
 
     ThreadSafeQueue<Task> task_queue;
     std::vector<std::thread> workers;
 
     // start worker threads
     for (size_t i = 0; i < arguments.threadNumber; ++i) {
-        workers.emplace_back(process_read, std::ref(task_queue), std::ref(lcp_cores), arguments.lcpLevel);
+        workers.emplace_back(process_read, std::ref(task_queue), std::ref(arguments.lcp_cores), arguments.lcpLevel);
     }
 
-    std::cout << "Processing is started for " << filename << std::endl;
+    std::cout << "Processing is started for " << arguments.infilename << std::endl;
     
     // variables
     char buffer[BUFFERSIZE];
@@ -134,5 +134,5 @@ void read_fastq( std::string filename, args& arguments, std::vector<uint>& lcp_c
         }
     }
 
-    generateMinhashSignature(lcp_cores);
+    generateMinhashSignature(arguments.lcp_cores);
 };

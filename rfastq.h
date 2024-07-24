@@ -22,6 +22,6 @@ struct Task {
 };
 
 void process_read( ThreadSafeQueue<Task>& task_queue, std::vector<uint>& lcp_cores, int lcp_level );
-void read_fastq( std::string filename, args& arguments, std::vector<uint>& lcp_cores );
+void read_fastq( args& arguments );
 
 #endif

@@ -9,6 +9,6 @@
 #include "lps.h"
 #include "chtslib.h"
 
-void read_bam(std::string filename, args& arguments, std::vector<uint>& lcp_cores);
+void read_bam( args& arguments );
 
 #endif

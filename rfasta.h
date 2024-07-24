@@ -7,9 +7,10 @@
 #include <iostream>
 #include "args.h"
 #include "lps.h"
+#include "helper.h"
+#include "fileio.h"
 #include "similarity_metrics.h"
 
-void flatten(std::vector<lcp::lps*>& strs, std::vector<uint>& lcp_cores);
-void read_fasta(std::string filename, args& arguments, std::vector<uint>& lcp_cores);
+void read_fasta( args& arguments );
 
 #endif
