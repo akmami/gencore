@@ -34,6 +34,9 @@ gencore.o: gencore.cpp
 fileio.o: fileio.cpp
 	$(GXX) $(CXXFLAGS) $(LCPTOOLS_CXXFLAGS) -c $< -o $@
 
+helper.o: helper.cpp
+	$(GXX) $(CXXFLAGS) $(LCPTOOLS_CXXFLAGS) -c $< -o $@
+
 rfasta.o: rfasta.cpp
 	$(GXX) $(CXXFLAGS) $(LCPTOOLS_CXXFLAGS) -c $< -o $@
 
@@ -46,11 +49,11 @@ rfastq.o: rfastq.cpp
 # dependencies
 gencore.o: init.o rbam.o rfasta.o rfastq.o similarity_metrics.o
 chtslib.o:
-fileio.o: 
+fileio.o: helper.o
 init.o:
 helper.o:
 rbam.o: similarity_metrics.o
-rfasta.o: similarity_metrics.o
+rfasta.o: similarity_metrics.o helper.o
 rfastq.o: helper.o similarity_metrics.o
 similarity_metrics.o:
 
