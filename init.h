@@ -12,6 +12,6 @@
 #endif
 
 void printUsage();
-void parse(int argc, char **argv, args& arguments);
+void parse(int argc, char **argv, args& arguments1, args& arguments2);
 
 #endif
