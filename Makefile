@@ -16,7 +16,7 @@ TIME := /usr/bin/time -v
 LCPTOOLS_CXXFLAGS := -I$(CURRENT_DIR)/lcptools/include
 LCPTOOLS_LDFLAGS := -L$(CURRENT_DIR)/lcptools/lib -llcptools -Wl,-rpath,$(CURRENT_DIR)/lcptools/lib -lz
 HTSLIB_CXXFLAGS := -I$(CURRENT_DIR)/htslib/include
-HTSLIB_LDFLAGS := -L$(CURRENT_DIR)/htslib/lib -lhts -Wl,-rpath,$(CURRENT_DIR)/htslib/lib
+HTSLIB_LDFLAGS := -L$(CURRENT_DIR)/htslib/lib -lhts -Wl,-rpath,$(CURRENT_DIR)/htslib/lib -pthread
 
 $(TARGET): $(OBJS)
 	$(GXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(LCPTOOLS_LDFLAGS) $(HTSLIB_LDFLAGS)
