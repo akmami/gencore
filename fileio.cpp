@@ -8,6 +8,8 @@ void save(std::string filename, std::vector<lcp::lps*>& cores) {
         return;
     }
 
+    std::cout << "Saving cores to file " << filename << std::endl;
+
     size_t size = cores.size();
 
     out.write(reinterpret_cast<const char*>(&size), sizeof(size));
@@ -25,6 +27,8 @@ void load(std::string filename, std::vector<lcp::lps*>& cores) {
         std::cerr << "Error opening file for reading" << std::endl;
         return;
     }
+
+    std::cout << "Loading cores from file " << filename << std::endl;
 
     size_t size;
 
