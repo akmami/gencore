@@ -34,6 +34,7 @@ void read_fasta( args& arguments ) {
 
                     std::cout << "Processing is done for " << id << std::endl;
                     std::cout << "Length of the processed sequence: " << sequence.size() << std::endl;
+                    std::cout << "Number of cores for lcp level " << arguments.lcpLevel << ": " << str->cores.size() << std::endl;
                     std::cout << std::endl;
                     
                     strs.push_back(str);
@@ -57,7 +58,7 @@ void read_fasta( args& arguments ) {
     flatten(strs, arguments.lcp_cores);
 
     if ( arguments.writeCores ) {
-        // write to file
+        save( arguments.outfilename, strs );
     }
 
     generateMinhashSignature(arguments.lcp_cores);
