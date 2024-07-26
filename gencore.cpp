@@ -15,6 +15,7 @@ int main(int argc, char **argv) {
 
     args arguments1, arguments2;
     parse(argc, argv, arguments1, arguments2);
+    lcp::init_coefficients(true);
 
     if ( arguments1.readCores ) {
         read_from_file( arguments1 );
