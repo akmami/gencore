@@ -125,6 +125,8 @@ void parse(int argc, char **argv, args& arguments1, args& arguments2) {
             index++;
         } else if( strcmp(argv[index], "-w") == 0 ) {
             index++;
+            arguments1.writeCores = true;
+            arguments2.writeCores = true;
             if ( index >= argc ) {
                 std::cerr << "Error: Missing output files names." << std::endl;
                 exit(1);
