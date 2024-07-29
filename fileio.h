@@ -6,6 +6,7 @@
 #include "args.h"
 #include "lps.h"
 #include "helper.h"
+#include "similarity_metrics.h"
 
 void save(std::string filename, std::vector<lcp::lps*>& cores);
 void load(std::string filename, std::vector<lcp::lps*>& cores);

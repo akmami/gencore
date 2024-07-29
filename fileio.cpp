@@ -50,4 +50,6 @@ void read_from_file( args& arguments) {
     load( arguments.infilename, strs );
 
     flatten( strs, arguments.lcp_cores );
+
+    generateMinhashSignature(arguments.lcp_cores);
 };
