@@ -14,6 +14,7 @@ struct args {
     size_t threadNumber;
     size_t lcpLevel;
     std::vector<uint> lcp_cores;
+    bool verbose;
 };
 
 #endif
