@@ -9,6 +9,8 @@ void read_fasta( args& arguments ) {
     int chrom_index = 0;
     std::string line;
 
+    bool verbose = arguments.verbose;
+
     std::vector<lcp::lps*> strs;
 
     // read file
@@ -27,15 +29,13 @@ void read_fasta( args& arguments ) {
                 if (sequence.size() != 0) {
                 
                     lcp::lps* str = new lcp::lps(sequence);
-                    
-                    for ( size_t i = 1; i < arguments.lcpLevel; i++ ) {
-                        str->deepen();
-                    }
 
-                    std::cout << "Processing is done for " << id << std::endl;
-                    std::cout << "Length of the processed sequence: " << sequence.size() << std::endl;
-                    std::cout << "Number of cores for lcp level " << arguments.lcpLevel << ": " << str->cores.size() << std::endl;
-                    std::cout << std::endl;
+                    str->deepen(arguments.lcpLevel);
+
+                    verbose && std::cout << "Processing is done for " << id << std::endl;
+                    verbose && std::cout << "Length of the processed sequence: " << sequence.size() << std::endl;
+                    verbose && std::cout << "Number of cores for lcp level " << arguments.lcpLevel << ": " << str->cores.size() << std::endl;
+                    verbose && std::cout << std::endl;
                     
                     strs.push_back(str);
                     
@@ -43,7 +43,7 @@ void read_fasta( args& arguments ) {
                 }
                 
                 id = line.substr(1);
-                std::cout << "Processing started for " << id << std::endl;
+                verbose && std::cout << "Processing started for " << id << std::endl;
                 continue;
                     
             }
@@ -58,8 +58,10 @@ void read_fasta( args& arguments ) {
     flatten(strs, arguments.lcp_cores);
 
     if ( arguments.writeCores ) {
-        save( arguments.outfilename, strs );
+        save( arguments, strs );
     }
 
     generateMinhashSignature(arguments.lcp_cores);
+
+    file.close();
 };

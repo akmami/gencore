@@ -92,7 +92,7 @@ void read_fastq( args& arguments ) {
         workers.emplace_back(process_read, std::ref(task_queue), std::ref(arguments.lcp_cores), arguments.lcpLevel);
     }
 
-    std::cout << "Processing is started for " << arguments.infilename << std::endl;
+    arguments.verbose && std::cout << "Processing is started for " << arguments.infilename << std::endl;
     
     // variables
     char buffer[BUFFERSIZE];
