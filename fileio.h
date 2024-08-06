@@ -8,8 +8,8 @@
 #include "helper.h"
 #include "similarity_metrics.h"
 
-void save(std::string filename, std::vector<lcp::lps*>& cores);
-void load(std::string filename, std::vector<lcp::lps*>& cores);
+void save(args& arguments, std::vector<lcp::lps*>& cores);
+void load(args& arguments, std::vector<lcp::lps*>& cores);
 void read_from_file(args& arguments);
 
 #endif
