@@ -90,3 +90,8 @@ reinstall-lcptools:
 	rm -rf lcptools
 	git submodule update --init --recursive
 
+recompile-lcptools:
+	cd lcptools && \
+	make uninstall PREFIX=$(CURRENT_DIR)/lcptools && \
+	make && \
+	make install PREFIX=$(CURRENT_DIR)/lcptools
