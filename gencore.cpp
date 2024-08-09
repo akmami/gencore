@@ -2,6 +2,7 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
+#include <iomanip>
 
 #include "args.h"
 #include "init.h"
@@ -31,9 +32,15 @@ int main(int argc, char **argv) {
         }
     }
 
-    double jaccard[arguments.size()][arguments.size()] = { 1 };
-    double dice[arguments.size()][arguments.size()] = { 1 };
-    double distance[arguments.size()][arguments.size()] = { 1 };
+    double jaccard[arguments.size()][arguments.size()];
+    double dice[arguments.size()][arguments.size()];
+    double distance[arguments.size()][arguments.size()];
+    
+    for (size_t i = 0; i < arguments.size(); i++ ) {
+        jaccard[i][i] = 1;
+        dice[i][i] = 1;
+        distance[i][i] = 1;
+    }
 
     for ( std::vector<args>::iterator it1 = arguments.begin(); it1 < arguments.end(); it1++ ) { 
         for ( std::vector<args>::iterator it2 = it1+1; it2 < arguments.end(); it2++ ) {
@@ -67,13 +74,14 @@ int main(int argc, char **argv) {
         }
     }
 
+    std::cout << std::setprecision(15);
+    
     std::cout << "Dice Matrix" << std::endl;
     for(size_t i = 0; i < arguments.size(); i++ ) {
         for(size_t j = 0; j < arguments.size()-1; j++ ) {
             std::cout << dice[i][j] << ",";
         }
         std::cout << distance[i][arguments.size()-1] << std::endl;
-        std::cout << std::endl;
     }
     std::cout << std::endl;
 
@@ -83,7 +91,6 @@ int main(int argc, char **argv) {
             std::cout << jaccard[i][j] << ",";
         }
         std::cout << distance[i][arguments.size()-1] << std::endl;
-        std::cout << std::endl;
     }
     std::cout << std::endl;
 
