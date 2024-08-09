@@ -17,6 +17,8 @@ void save(args& arguments, std::vector<lcp::lps*>& cores) {
     for ( std::vector<lcp::lps*>::iterator it = cores.begin(); it != cores.end(); it++ ) {
         (*it)->write(out);
     }
+
+    out.close();
 };
 
 
@@ -42,6 +44,8 @@ void load(args& arguments, std::vector<lcp::lps*>& cores) {
 
         cores.push_back(str);
     }
+
+    in.close();
 };
 
 
@@ -54,4 +58,10 @@ void read_from_file( args& arguments ) {
     flatten( strs, arguments.lcp_cores );
 
     generateMinhashSignature(arguments.lcp_cores);
+
+    for ( std::vector<lcp::lps*>::iterator it = strs.begin(); it != strs.end(); it++ ) {
+        delete (*it);
+    }
+
+    strs.clear();
 };

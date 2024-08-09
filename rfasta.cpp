@@ -64,4 +64,10 @@ void read_fasta( args& arguments ) {
     generateMinhashSignature(arguments.lcp_cores);
 
     file.close();
+
+    for ( std::vector<lcp::lps*>::iterator it = strs.begin(); it != strs.end(); it++ ) {
+        delete (*it);
+    }
+
+    strs.clear();
 };
