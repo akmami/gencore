@@ -47,15 +47,16 @@ rfastq.o: rfastq.cpp
 	$(GXX) $(CXXFLAGS) -c $< -o $@
 
 # dependencies
-gencore.o: init.o rbam.o rfasta.o rfastq.o similarity_metrics.o
 chtslib.o:
-fileio.o: helper.o
-init.o:
+fileio.o: helper.o similarity_metrics.o
+gencore.o: init.o rbam.o rfasta.o rfastq.o similarity_metrics.o
 helper.o:
-rbam.o: similarity_metrics.o
-rfasta.o: similarity_metrics.o helper.o
+init.o: logging.o
+logging.o:
+rbam.o: similarity_metrics.o chtslib.o
+rfasta.o: similarity_metrics.o helper.o fileio.o
 rfastq.o: helper.o similarity_metrics.o
-similarity_metrics.o:
+similarity_metrics.o: logging.o
 
 clean: 
 	@echo "Cleaning"
