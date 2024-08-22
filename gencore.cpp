@@ -3,6 +3,7 @@
 #include <thread>
 #include <mutex>
 #include <iomanip>
+#include <fstream>
 
 #include "args.h"
 #include "init.h"
@@ -14,21 +15,33 @@
 
 int main(int argc, char **argv) {
 
+    bool calculateSet = true;
+
     std::vector<args> arguments;
     parse(argc, argv, arguments);
-    lcp::init_coefficients(true);
 
-    for ( std::vector<args>::iterator it = arguments.begin(); it < arguments.end(); it++ ) {
-        if ( it->readCores ) {
-            read_from_file( *it );
-        } else if ( it->mode == FA ) {
-            read_fasta( *it );
-        } else if ( it->mode == FQ ) {
-            read_fastq( *it );
-        } else if ( it->mode == BAM ) {
-            read_bam( *it );
+    bool readCores = arguments[0].readCores;
+    bool verbose = arguments[0].verbose;
+
+    lcp::init_coefficients(verbose);
+
+    if ( readCores ) {
+        read_cores( arguments );
+    } else {
+        program_mode mode = arguments[0].mode;
+        if ( mode == FA ) {
+            read_fastas( arguments );
+        } else if ( mode == FQ ) {
+            for ( std::vector<args>::iterator it = arguments.begin(); it < arguments.end(); it++ ) {
+                read_fastq( *it );
+            }
+        } else if ( mode == BAM ) {
+            for ( std::vector<args>::iterator it = arguments.begin(); it < arguments.end(); it++ ) {
+                read_bam( *it );
+            }
         } else {
             throw std::invalid_argument("Invalid program mode provided");
+            exit(1);
         }
     }
 
@@ -45,25 +58,32 @@ int main(int argc, char **argv) {
     for ( std::vector<args>::iterator it1 = arguments.begin(); it1 < arguments.end(); it1++ ) { 
         for ( std::vector<args>::iterator it2 = it1+1; it2 < arguments.end(); it2++ ) {
             
-            size_t intersection_size = 0, union_size = 0, same_count;
+            std::vector<uint> set1, set2;
+            std::vector<size_t> counts1, counts2;
+            initializeSetAndCounts( it1->lcp_cores, set1, counts1 );
+            initializeSetAndCounts( it2->lcp_cores, set2, counts2 );
 
-            calculateIntersectionAndUnionSizes( it1->lcp_cores, it2->lcp_cores, intersection_size, union_size);
+            size_t interSize = 0, unionSize = 0;
 
-            double jaccard_similarity = calculateJaccardSimilarity(intersection_size, union_size);
-            double dice_similarity = calculateDiceSimilarity(intersection_size, it1->lcp_cores.size(), it2->lcp_cores.size());
-            double distance_similarity = calculateDistanceSimilarity(it1->lcp_cores, it2->lcp_cores, 1, 1, same_count);
+            if ( calculateSet ) {
+                calculateIntersectionAndUnionSizes( set1, set2, interSize, unionSize);
+            }
+            else {
+                calculateIntersectionAndUnionSizes( it1->lcp_cores, it2->lcp_cores, interSize, unionSize);
+            }
             
-            std::cout << "Similarity metrics for " << it1->infilename << " and " << it2->infilename << std::endl;
+            double depth1 = 1;
+            double depth2 = static_cast<double>(it2->size) / static_cast<double>(it1->size);
+            
+            double jaccard_similarity = calculateJaccardSimilarity(interSize, unionSize);
+            double dice_similarity = calculateDiceSimilarity(interSize, it1->lcp_cores.size(), it2->lcp_cores.size());
+            double distance_similarity = calculateNormalizedVectorSimilarity(set1, set2, depth1, depth2);
 
-            std::cout << "Intersection Size: " << intersection_size << std::endl;
-            std::cout << "Union Size: " << union_size << std::endl;
-            std::cout << "Same Core Count: " << same_count << std::endl;
-            std::cout << std::endl;
-
-            std::cout << "Jaccard Similarity: " << jaccard_similarity << std::endl;
-            std::cout << "Dice Similarity: " << dice_similarity << std::endl;
-            std::cout << "Distance Based Similarity: " << distance_similarity << std::endl;
-            std::cout << std::endl;
+            if ( verbose ) {
+                log(INFO, "Similarity metrics for %s and %s", it1->infilename.c_str(), it2->infilename.c_str());
+                log(INFO, "Intersection Size: %d, Union Size: %d", interSize, unionSize);
+                log(INFO, "Depth1: %f, Depth 2: %f", depth1, depth2);
+            }
 
             dice[it1 - arguments.begin()][it2 - arguments.begin()] = dice_similarity;
             jaccard[it1 - arguments.begin()][it2 - arguments.begin()] = jaccard_similarity;
@@ -74,34 +94,43 @@ int main(int argc, char **argv) {
         }
     }
 
-    std::cout << std::setprecision(15);
+    std::fstream dice_out, jaccard_out, distance_out;
+    dice_out.open( arguments[0].prefix + ".dice", std::ios::out );
+    jaccard_out.open( arguments[0].prefix + ".jaccard", std::ios::out );
+    distance_out.open( arguments[0].prefix + ".ns", std::ios::out );
+
+    if ( dice_out.is_open() ) {  
+        dice_out << std::setprecision(15);
+        for(size_t i = 0; i < arguments.size(); i++ ) {
+            for(size_t j = 0; j < arguments.size()-1; j++ ) {
+                dice_out << dice[i][j] << ",";
+            }
+            dice_out << dice[i][arguments.size()-1] << std::endl;
+        }
+        dice_out.close();
+    }
     
-    std::cout << "Dice Matrix" << std::endl;
-    for(size_t i = 0; i < arguments.size(); i++ ) {
-        for(size_t j = 0; j < arguments.size()-1; j++ ) {
-            std::cout << dice[i][j] << ",";
+    if ( jaccard_out.is_open() ) {  
+        jaccard_out << std::setprecision(15);
+        for(size_t i = 0; i < arguments.size(); i++ ) {
+            for(size_t j = 0; j < arguments.size()-1; j++ ) {
+                jaccard_out << jaccard[i][j] << ",";
+            }
+            jaccard_out << jaccard[i][arguments.size()-1] << std::endl;
         }
-        std::cout << distance[i][arguments.size()-1] << std::endl;
+        jaccard_out.close();
     }
-    std::cout << std::endl;
 
-    std::cout << "Jaccard Matrix" << std::endl;
-    for(size_t i = 0; i < arguments.size(); i++ ) {
-        for(size_t j = 0; j < arguments.size()-1; j++ ) {
-            std::cout << jaccard[i][j] << ",";
+    if ( distance_out.is_open() ) {  
+        distance_out << std::setprecision(15);
+        for(size_t i = 0; i < arguments.size(); i++ ) {
+            for(size_t j = 0; j < arguments.size()-1; j++ ) {
+                distance_out << distance[i][j] << ",";
+            }
+            distance_out << distance[i][arguments.size()-1] << std::endl;
         }
-        std::cout << distance[i][arguments.size()-1] << std::endl;
+        distance_out.close();
     }
-    std::cout << std::endl;
-
-    std::cout << "Distance Based Matrix" << std::endl;
-    for(size_t i = 0; i < arguments.size(); i++ ) {
-        for(size_t j = 0; j < arguments.size()-1; j++ ) {
-            std::cout << distance[i][j] << ",";
-        }
-        std::cout << distance[i][arguments.size()-1] << std::endl;
-    }
-    std::cout << std::endl;
 
     return 0;
 };
