@@ -1,15 +1,45 @@
 #include "rfasta.h"
 
+void read_fastas( std::vector<args>& arguments ) {
+    
+    const size_t THREADNUMBER = arguments[0].threadNumber;
+    std::vector<std::thread> threads;
+    std::vector<args>::iterator current_argument = arguments.begin();
+
+    while (current_argument < arguments.end()) {
+
+        while (threads.size() < THREADNUMBER && current_argument < arguments.end()) {
+            threads.emplace_back(read_fasta, std::ref(*current_argument));
+            current_argument++;
+        }
+
+        for ( std::vector<std::thread>::iterator it = threads.begin(); it != threads.end(); ) {
+            if (it->joinable()) {
+                it->join();
+                it = threads.erase(it);
+            } else {
+                it++;
+            }
+        }
+    }
+
+    for (std::vector<std::thread>::iterator it = threads.begin(); it != threads.end(); it++ ) {
+        it->join();
+    }
+};
+
 
 void read_fasta( args& arguments ) {
-    
+    std::ostringstream ss;
+    ss << std::this_thread::get_id();
+    log(INFO, "Thread ID: %s started processing %s", ss.str().c_str(), arguments.infilename.c_str());
+
     std::fstream file;
     file.open( arguments.infilename, std::ios::in );
 
     int chrom_index = 0;
     std::string line;
-
-    bool verbose = arguments.verbose;
+    size_t genome_size = 0;
 
     std::vector<lcp::lps*> strs;
 
@@ -29,30 +59,27 @@ void read_fasta( args& arguments ) {
                 if (sequence.size() != 0) {
                 
                     lcp::lps* str = new lcp::lps(sequence);
-
                     str->deepen(arguments.lcpLevel);
 
-                    verbose && std::cout << "Processing is done for " << id << std::endl;
-                    verbose && std::cout << "Length of the processed sequence: " << sequence.size() << std::endl;
-                    verbose && std::cout << "Number of cores for lcp level " << arguments.lcpLevel << ": " << str->cores.size() << std::endl;
-                    verbose && std::cout << std::endl;
-                    
                     strs.push_back(str);
+                    genome_size += sequence.size();
                     
                     sequence.clear();
                 }
                 
                 id = line.substr(1);
-                verbose && std::cout << "Processing started for " << id << std::endl;
                 continue;
-                    
             }
             else if (line[0] != '>'){
                 sequence += line;
             }
         }
-
+        
+        arguments.size = genome_size;
         file.close();
+    } else {
+        log(ERROR, "Could not be able to open %s", arguments.infilename.c_str());
+        exit(1);
     }
     
     flatten(strs, arguments.lcp_cores);
@@ -61,13 +88,11 @@ void read_fasta( args& arguments ) {
         save( arguments, strs );
     }
 
-    generateMinhashSignature(arguments.lcp_cores);
-
-    file.close();
-
     for ( std::vector<lcp::lps*>::iterator it = strs.begin(); it != strs.end(); it++ ) {
         delete (*it);
     }
 
     strs.clear();
+
+    generateMinhashSignature(arguments.lcp_cores);
 };
