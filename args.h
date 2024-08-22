@@ -11,9 +11,11 @@ struct args {
     std::string infilename;
     bool writeCores;
     std::string outfilename;
+    std::string prefix;
     size_t threadNumber;
     size_t lcpLevel;
     std::vector<uint> lcp_cores;
+    size_t size;
     bool verbose;
 };
 
