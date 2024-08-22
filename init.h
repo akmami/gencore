@@ -8,6 +8,7 @@
 #include <vector>
 #include "args.h"
 #include "program_mode.h"
+#include "logging.h"
 
 #ifndef THREAD_NUMBER
 #define THREAD_NUMBER 8
@@ -15,6 +16,10 @@
 
 #ifndef VERBOSE 
 #define VERBOSE false
+#endif
+
+#ifndef PREFIX 
+#define PREFIX "gc"
 #endif
 
 void printUsage();
