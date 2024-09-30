@@ -3,16 +3,22 @@
 ## Overview
 
 **GenCore** is a cutting-edge tool designed for the comparison of genomic sequences. 
-Unlike traditional genomic comparison methods that rely on hashing techniques, GenCore utilizes Locally Consistent Parsing (LCP), a novel approach that processes strings recursively to identify cores adhering to the LCP rules. 
-This method enables highly accurate comparisons between given genomes, specifically catering to `.fastq.gz` compressed files containing long reads.
+Unlike traditional genomic comparison methods that rely on hashing techniques, **GenCore** utilizes Locally Consistent Parsing (LCP), a novel approach that processes strings recursively to identify cores adhering to the LCP rules. 
+These cores enable highly accurate comparison of genomes to evaluate distances and ultimately construct phylogenetic trees.
 
 ## Features
 
-- *Locally Consistent Parsing (LCP)*: Employs LCP for deep and accurate genome comparison.
+- **Genome Comparison**: Efficiently compare genomes using distance metrics.
 
-- *Efficiency*: Designed to handle `.fastq.gz` compressed files directly, saving time and disk space.
+- **Distance Matrix Calculation**: Compute various similarity metrics including Jaccard, Dice, and normalized vector similarity.
 
-- *Multi-threading Support*: Capable of utilizing multiple threads for processing, significantly speeding up the comparison process.
+- **Multi-threading Support**: Leverage multiple threads for faster processing.
+
+- **Flexible Input Formats**: Support for FASTA (`.fa`), FASTQ (gzipped) (`.fq.gz`), and BAM (`.bam`) file formats.
+
+- **Core Management**: Read and write core files for streamlined genomic analysis.
+
+- **Customizable Parameters**: Options for adjusting the number of threads, LCP levels, and distance calculation methods.
 
 ## Getting Started
 
@@ -24,6 +30,12 @@ This method enables highly accurate comparisons between given genomes, specifica
 
 - Access to a Unix-like environment (Linux, macOS).
 
+- `htslib`: Required for reading BAM and FASTQ files.
+
+- `lcptools`: Required for locally consistent parsing.
+
+- `biopython`, `matplotlib`, `PyQt5`, and `ete3`: Required for constructing phylogenetic tree from distance matrices.
+
 ### Installation
 
 1) Download the source code to your local machine.
@@ -32,83 +44,168 @@ This method enables highly accurate comparisons between given genomes, specifica
 
 3) Navigate to `lcptools/program`.
     
-4) Run `make compile` in the terminal within the project directory. This compiles the source code and generates an executable named `compare-genomes`.
+4) Run `make` in the terminal within the project directory. This compiles the source code and generates an executable named `gencore`.
 
 ### Installation on Unix (Linux & macOS)
 
 First, open your terminal. 
 Then execute the following commands to clone the repository and compile the source code:
 
+- **Clone the Repository**:
+
 ```cpp
-# clone the repository
-git clone https://github.com/akmami/lcptools.git
+git clone https://github.com/akmami/gencore.git
+cd gencore
+```
 
-# navigate to the project directory
-cd lcptools/program
+- **Build the Project**: Run the following command to compile the project and its dependencies:
+```
+make install
+```
 
-# create necessary directories
-make
+This will compile the `gencore` executable and install `htslib` and `lcptools` as required.
 
-# compile the source code using Makefile
-make compile
+- **Clean Up**: To remove object files and the target binary, run:
 
-# optionally, move the executable to a directory in your PATH for global access
-sudo cp ../bin/gencore /usr/local/bin
-
-# optionally, you can test the program
-make test
+```
+make clean
 ```
 
 These instructions assume that you have `git`, a C++ compiler, and `make` installed on your system. 
 
-The `sudo mv gencore /usr/local/bin` command is optional and requires administrative privileges. 
-It makes the `compare-genomes` executable globally accessible from any terminal window.
+### Reinstalling Dependencies
 
+If you need to reinstall `htslib` or `lcptools`, use:
 
-### Running `compare-genomes`
-
-`compare-genomes` efficiently compares two genomes from compressed `fastq.gz` files utilizing the Locally Consistent Parsing (LCP) approach. The program is designed to optimize performance through multi-threading.
-
-### Usage
-
-Execute `compare-genomes` with the following command structure:
-
-```cpp
-./compare-genomes genome-input-1.fastq.gz genome-input-2.fastq.gz -l <lcp_level> -t <threads_per_genome> --genome-1-len <length_of_genome_1> --genome-2-len <length_of_genome_2>
 ```
-Parameters
-
-* `genome-input-1.gz`: Path to the first compressed FASTQ file.
-* `genome-input-2.gz`: Path to the second compressed FASTQ file.
-* `-l <lcp_level>`: Sets the LCP level for the analysis. 
-Replace <lcp_level> with the desired level. 
-It is advised to set it to *7*.
-* `-t <threads_per_genome>` *(optional)*: Indicates the number of threads allocated for processing each genome. Default is set to *8*.
-This count includes threads for reading and processing tasks. 
-Since the program analyzes two genomes simultaneously, the total number of threads used is double the number specified here plus two for the reader threads, leading to a total of *10* threads for *4* processing threads per genome if `-t` is given as *4*.
-* `--genome-1-len <length_of_genome_1>`: The length of the first genome in bases.
-* `--genome-2-len <length_of_genome_2>`: The length of the second genome in bases.
-
-### Example
-
-To run a comparison between two genomes, specifying their lengths and using an optimal number of threads for processing:
-
-```cpp
-./compare-genomes genome1.fastq.gz genome2.fastq.gz -l 7 -t 4 --genome-1-len 3088269832 --genome-2-len 3088269832
+make reinstall-htslib
+make reinstall-lcptools
 ```
 
-This command compares genome1.fastq.gz and genome2.fastq.gz, applying an LCP level of *7* and allocating *4* threads for the processing of each genome. Considering the architecture of the program, this setup results in using *1* thread for reading and *4* threads for processing per genome, totaling *10* threads for the analysis of two genomes.
+## Usage
+
+The **GenCore** tool can be executed with various command-line options. Below are the primary usage patterns:
+
+### Basic Command Structure
+
+
+```
+./gencore [OPTIONS]
+```
+
+### Options
+
+- Read Cores:
+
+```
+-r              Read cores from specified files.
+                Usage: ./gencore -r file1.cores,file2.cores
+                or: ./gencore -r -f filenames.txt
+```
+
+- **File Formats**: Specify the format of the files you are processing:
+
+```
+[fa|fq|bam]     Execute program with specified files in the given format.
+                Supported formats: [ fa | fq.gz | bam ]
+                Usage: ./gencore fa ref1.fa,ref2.fa
+                       ./gencore fq reads1.fq.gz,reads2.fq.gz
+                       ./gencore bam aln1.bam,aln2.bam
+```
+
+- **Input File List**:
+
+```
+-f [filename]   Execute program with a file containing file names.
+                Usage: ./gencore fa -f filenames.txt
+```
+
+- **LCP Level**:
+
+```
+-l [level]      Set LCP level. [Default: 4]
+                Usage: ./gencore fa ref1.fa,ref2.fa -l 4
+```
+
+- **Number of Threads**:
+
+```
+-t [number]     Set number of threads. [Default: 8]
+                Usage: ./gencore fa ref1.fa,ref2.fa -t 2
+```
+
+- **Set Type**:
+
+```
+[--set|--vec]   Choose calculation method based on set or vector of cores. [Default: vector]
+                Usage: ./gencore fa ref1.fa,ref2.fa --set
+
+```
+
+- **Write Cores**:
+
+```
+-w [filenames]  Store cores processed from input files.
+                Usage: ./gencore fa ref1.fa,ref2.fa -w ref1.cores,ref2.cores
+                or: ./gencore fa ref1.fa,ref2.fa -w -f filenames.txt
+```
 
 ## Input Files
 
-GenCore requires fastq files as input, which should contain the long reads of the genomes to be compared.
+The **GenCore** tool requires specific input files to process genomic data and compute distance matrices. 
+Below are the details regarding the expected input file formats:
 
-- `Fastq Format`: Each input file must comply with the standard fastq format.
+1) FASTA Files: Each file must be in FASTA format, where each sequence represents a genomic region or chromosome.where genome_short_name is a unique 
+
+2) FASTQ Files: Each file must be in FASTQ format and should be compressed using gzip (.gz), where each sequence represents a genomic region.
+
+3) BAM Files: Each file must be in BAM format, which is a binary version of the SAM format.
+
+### File Input Options
+
+You can provide input files using one of the following methods:
+
+1) Command Line Arguments: Concatenate file names with commas, e.g., file1.fasta,file2.fastq,file3.bam.
+
+2) File Option: Use the -f option to specify a file containing the names of input files, where each file name should be on a separate line. For example:
+
+    ```
+    file1.fasta
+    file2.fasta
+    file3.fasta
+    ```
 
 ## Program Outputs
 
-After successfully running `compare-genomes`, the program generates several outputs, including logs and similarity metrics. 
-Below are the key results you can expect, along with brief explanations of each metric:
+The **GenCore** tool generates several output files containing distance matrices calculated from the genomic cores processed. 
+The outputs are saved in the specified prefix format, and the following files will be created based on the provided command-line arguments:
+
+### Output Files
+
+1) **Dice Distance Matrix**:
+
+  - Filename: `<prefix>.dice.phy`
+
+  - Format: The first line contains the number of genomes followed by a matrix of Dice distances. Each subsequent line starts with the short name of the genome, followed by the distances from that genome to all other genomes. The distance values are represented as floating-point numbers.
+
+2) **Jaccard Similarity Matrix**:
+
+  - Filename: `<prefix>.jaccard.phy`
+
+  - Format: Similar to the Dice distance matrix, this file contains the number of genomes on the first line, followed by the Jaccard similarity values. Each genome’s line starts with its short name and is followed by its similarities to all other genomes. Similar to the Dice matrix, these values are also represented as floating-point numbers.
+
+2) **Normalized Vector Similarity Matrix**:
+
+  - Filename: `<prefix>.ns.phy`
+
+  - Format: This file contains the number of genomes in the first line, followed by the normalized vector similarity distances. Each genome’s line starts with its short name and is followed by the similarity distances to all other genomes.
+
+### Note 
+
+The distances and similarities computed are useful for phylogenetic analysis, allowing researchers to understand the relationships and evolutionary distances between different genomes. 
+Ensure to specify a valid prefix to easily manage output files and facilitate subsequent analyses.
+
+Output files contain distances which is calculated by subtracting the similarity score from 1.
 
 ### Similarity Metrics
 
@@ -125,17 +222,17 @@ This approach aims to offer a detailed perspective on similarity, factoring in n
 
 #### Formula Breakdown
 
-Given two genomic sequences, `G1` and `G2`:
+Given two genomic sequences, `G1` and `G2`, the similarity is calculated using the following formula:
 
-* `G1` = <img src="../img/cores1.jpg" alt="Cores of the first genome" height="20" style="display:inline-block; vertical-align:middle;" /> denotes the set of cores in the first genome.
-* `counts1` = <img src="../img/counts1.jpg" alt="Number of occurrences of each core in the first genome" height="20" style="display:inline-block; vertical-align:middle;" /> corresponds to the number of occurrences of each core in `G1`.
-* `G2` = <img src="../img/cores1.jpg" alt="Cores of the second genome" height="20" style="display:inline-block; vertical-align:middle;" /> denotes the set of cores in the second genome.
-* `counts2` = <img src="../img/counts2.jpg" alt="Number of occurrences of each core in the second genome" height="20" style="display:inline-block; vertical-align:middle;" /> corresponds to the number of occurrences of each core in `G2`.
-* `d1` and `d2` represent the sequencing depths of genomes `G1` and `G2`, respectively.
+$$
+1 - \frac{\sum_{i=1}^{n} | d_2 \cdot c_1^i - d_1 \cdot c_2^i |}{\sum_{i=1}^{n} d_2 \cdot c_1^i + d_1 \cdot c_2^i}
+$$
 
-The similarity between `G1` and `G2` is calculated using the following formula:
+Where:
+- \( $n$ \): The upper limit of the summation (number of cores).
+- \( $d_1, d_2$ \): represent the sequencing depths of genomes `G1` and `G2`, respectively.
+- \( $c_1^i, c_2^i$ \): Corresponds to the number of occurrences of core `i` in genomes, `G1` and `G2`, respectively.
 
-Similarity: <img src="../img/dist_formula.jpg" alt="Distance Based Similarity Formula" height="50" style="display:inline-block; vertical-align:middle;" />
 
 #### Interpretation
 
@@ -145,28 +242,8 @@ The weights are assigned based on the sequencing depths of the genomes, allowing
 * A Similarity score close to 1 indicates a high degree of similarity, implying minimal differences in the adjusted occurrences of cores between the genomes.
 * A score nearing 0 suggests greater disparity between the genomic sequences, as indicated by significant differences in the weighted core occurrences.
 
-### Logs
-
-The program also produces detailed logs during its execution. 
-These logs can provide insights into the processing stages, any potential issues encountered, and additional statistical information about the comparison process. 
-Users are encouraged to review the logs for a comprehensive understanding of the program's operation and results.
-
-## Example Output
-
-Upon completion, the program will display the similarity metrics in the terminal as:
-
-```cpp
-# Logs and genome related statistics
-
-Jaccard Similarity: 0.728918
-Dice Similarity: 0.843207
-Distance Based Similarity: 0.9936
-```
-
-This output provides a concise summary of the comparative analysis between the two genomes, highlighting their similarities across different metrics.
-
 ## License
 
-GenCore is released under BSD 3-Clause License.
+**GenCore** is released under BSD 3-Clause License.
 
 For more details, please visit the [license file](https://github.com/akmami/gencore/blob/main/LICENSE).
