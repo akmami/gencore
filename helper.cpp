@@ -1,90 +1,6 @@
 #include "helper.h"
 
 
-/**
- * @brief Processes a string by removing specific characters and checks for the presence of a character.
- *
- * This function modifies the given character array in place. It removes all '-' characters
- * from the array up to the first newline character '\n' or until BUFFERSIZE is reached. 
- * Additionally, it checks for the presence of the character 'N' in the string. The function 
- * sets a flag to true if 'N' is found at any position in the string.
- *
- * This function is particularly useful in genomic data processing, where '-' might represent 
- * a deletion or a gap in an alignment that needs to be removed. The presence of 'N' in the 
- * sequence might signify a specific condition or marker in the sequence that requires 
- * special handling or attention.
- *
- * @param str A character array of size BUFFERSIZE. The array is modified in place by removing 
- *        '-' characters, and the function ensures the processed string is null-terminated.
- * @return Returns true if the character 'N' is found in the string; otherwise, false.
- */
-bool process( char *str ) {
-    
-    size_t writeIndex = 0, readIndex = 0;
-    bool valid = true;
-
-    for ( ; readIndex < BUFFERSIZE && str[readIndex] != '\n' && str[readIndex] != '\0'; readIndex++ ) {
-
-        if ( str[readIndex] != '-' ) {
-            str[writeIndex++] = str[readIndex];
-        }
-
-        if ( str[readIndex] == 'N' ) {
-            valid = false;
-        }
-    }
-
-    str[writeIndex] = '\0';
-
-    return valid;
-};
-
-
-/**
- * @brief Processes a string by removing specific characters and checks for validity.
- *
- * This function iterates over the given string, removing any '-' characters found and
- * simultaneously checking for the presence of 'N' characters. The input string is modified
- * in place, with '-' characters removed. The presence of 'N' signifies that the string
- * is not valid for certain applications, such as genomic data processing where 'N' might
- * represent an unknown nucleotide.
- *
- * @param str A reference to the string to be processed. The string is modified in place,
- *            with '-' characters removed.
- * @return Returns true if the string does not contain any 'N' characters, indicating it
- *         is valid. Returns false if at least one 'N' character is found.
- */
-bool process( std::string& str ) {
-    size_t writeIndex = 0;
-    bool valid = true;
-
-    for (size_t readIndex = 0; readIndex < str.length(); readIndex++) {
-        if (str[readIndex] != '-') {
-            str[writeIndex++] = str[readIndex];
-        }
-
-        if (str[readIndex] == 'N') {
-            valid = false;
-        }
-    }
-
-    str.resize(writeIndex); // Adjust the size of the string to the new length
-
-    return valid;
-};
-
-
-/**
- * @brief Generates the reverse complement of a DNA sequence.
- *
- * This function takes a DNA sequence as input, reverses it, and then replaces each
- * nucleotide with its complement (A <-> T, C <-> G). This operation is commonly used
- * in bioinformatics for DNA sequence analysis, especially when working with palindromic
- * sequences or when preparing to align sequence reads from both strands.
- *
- * @param sequence The DNA sequence to be reversed and complemented.
- * @return Returns a new string containing the reverse complement of the input sequence.
- */
 bool reverseComplement( std::string& sequence ) {
     
     // reverse the sequence
@@ -106,19 +22,65 @@ bool reverseComplement( std::string& sequence ) {
 };
 
 
-void flatten(std::vector<lcp::lps*>& strs, std::vector<uint>& lcp_cores) {
+void flatten(std::vector<lcp::lps*>& strs, std::vector<uint32_t>& lcp_cores) {
     
     size_t size = 0;
     
     for(std::vector<lcp::lps*>::iterator it_str = strs.begin(); it_str != strs.end(); it_str++) {
-        size += (*it_str)->cores.size();
+        size += (*it_str)->cores->size();
     }
 
     lcp_cores.reserve(size);
 
     for(std::vector<lcp::lps*>::iterator it_str = strs.begin(); it_str != strs.end(); it_str++) {
-        for ( std::vector<lcp::core*>::iterator it_lcp = (*it_str)->cores.begin(); it_lcp != (*it_str)->cores.end(); it_lcp++ ) {
+        for ( std::vector<lcp::core*>::iterator it_lcp = (*it_str)->cores->begin(); it_lcp != (*it_str)->cores->end(); it_lcp++ ) {
             lcp_cores.push_back( (*it_lcp)->label );
         }
     }
+};
+
+
+void generateSignature( std::vector<uint32_t>& hash_values ) {
+    std::sort(hash_values.begin(), hash_values.end());
+};
+
+
+void initializeSetAndCounts( std::vector<uint32_t>& cores, std::vector<uint32_t>& set, std::vector<size_t>& counts ) {
+    
+    if( cores.empty() ) {
+        return;
+    }
+
+    int distinct_cores = 1;
+
+    for( size_t i = 1; i < cores.size(); i++ ) {
+        if( cores[i] != cores[i - 1] ) {
+            distinct_cores++;
+        }
+
+        if ( cores[i] < cores[i - 1] ) {
+            log(ERROR, "Given LCP cores should be sorted.");
+            exit(1);
+        }
+    }
+    
+    // pre-allocate memory for efficiency
+    set.reserve( distinct_cores ); 
+    counts.reserve( distinct_cores );
+    
+    set.push_back(cores[0]);
+    size_t count = 1;
+    
+    for (size_t i = 1; i < cores.size(); ++i) {
+        if (cores[i] == cores[i - 1]) {
+            count++;
+        } else {
+            counts.push_back(count);
+            set.push_back(cores[i]);
+            count = 1;
+        }
+    }
+
+    // add the count for the last element
+    counts.push_back(count); 
 };
