@@ -22,7 +22,35 @@
 #define PREFIX "gc"
 #endif
 
+/**
+ * @brief Displays the usage information for the program.
+ *
+ * This function prints the command-line usage instructions,
+ * including available options and their descriptions. It is
+ * typically called when the user requests help or when the
+ * input arguments are invalid.
+ */
 void printUsage();
-void parse(int argc, char **argv, std::vector<args>& arguments);
+
+/**
+ * @brief Parses command-line arguments.
+ *
+ * This function processes the command-line arguments passed to
+ * the program and populates the thread_arguments and program_arguments
+ * structures based on the provided options. It validates the input
+ * and handles any errors, potentially displaying usage information.
+ *
+ * @param argc The number of command-line arguments.
+ * @param argv An array of command-line argument strings.
+ * @param thread_arguments A vector of targs structures to be filled
+ *                        with thread-specific arguments based on
+ *                        parsed command-line options.
+ * @param program_arguments A pargs structure that stores global
+ *                         program settings and parameters.
+ *
+ * @note This function may exit the program if the provided arguments
+ *       are invalid or if there are missing required options.
+ */
+void parse( int argc, char **argv, std::vector<struct targs>& thread_arguments, struct pargs& program_arguments);
 
 #endif
