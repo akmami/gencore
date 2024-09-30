@@ -1,7 +1,5 @@
 #include <vector>
 #include <iostream>
-#include <thread>
-#include <mutex>
 #include <iomanip>
 #include <fstream>
 
@@ -15,119 +13,131 @@
 
 int main(int argc, char **argv) {
 
-    bool calculateSet = true;
+    // Parse and initialize arguments
+    std::vector<struct targs> thread_arguments;
+    struct pargs program_arguments;
 
-    std::vector<args> arguments;
-    parse(argc, argv, arguments);
+    parse(argc, argv, thread_arguments, program_arguments);
 
-    bool readCores = arguments[0].readCores;
-    bool verbose = arguments[0].verbose;
+    const size_t numGenomes = thread_arguments.size();
 
-    lcp::init_coefficients(verbose);
+    // Initialize coefficient arrays
+    lcp::init_coefficients( program_arguments.verbose );
 
-    if ( readCores ) {
-        read_cores( arguments );
+    // Process files program
+    if ( program_arguments.readCores ) {
+        read_cores( thread_arguments, program_arguments );
     } else {
-        program_mode mode = arguments[0].mode;
-        if ( mode == FA ) {
-            read_fastas( arguments );
-        } else if ( mode == FQ ) {
-            for ( std::vector<args>::iterator it = arguments.begin(); it < arguments.end(); it++ ) {
-                read_fastq( *it );
+        switch ( program_arguments.mode ) {
+        case FA:
+            read_fastas( thread_arguments, program_arguments );
+            break;
+        case FQ:
+            for ( std::vector<struct targs>::iterator it = thread_arguments.begin(); it < thread_arguments.end(); it++ ) {
+                read_fastq( *it, program_arguments );
             }
-        } else if ( mode == BAM ) {
-            for ( std::vector<args>::iterator it = arguments.begin(); it < arguments.end(); it++ ) {
-                read_bam( *it );
+            break;
+        case BAM:
+            for ( std::vector<struct targs>::iterator it = thread_arguments.begin(); it < thread_arguments.end(); it++ ) {
+                read_bam( *it, program_arguments );
             }
-        } else {
+            break;
+        default:
             throw std::invalid_argument("Invalid program mode provided");
             exit(1);
         }
     }
 
-    double jaccard[arguments.size()][arguments.size()];
-    double dice[arguments.size()][arguments.size()];
-    double distance[arguments.size()][arguments.size()];
+    log(INFO, "Calculating distance matrices...");
+
+    // Initialize similarity matrices
+    double jaccard[numGenomes][numGenomes];
+    double dice[numGenomes][numGenomes];
+    double distance[numGenomes][numGenomes];
     
-    for (size_t i = 0; i < arguments.size(); i++ ) {
+    for (size_t i = 0; i < numGenomes; i++ ) {
         jaccard[i][i] = 1;
         dice[i][i] = 1;
         distance[i][i] = 1;
     }
 
-    for ( std::vector<args>::iterator it1 = arguments.begin(); it1 < arguments.end(); it1++ ) { 
-        for ( std::vector<args>::iterator it2 = it1+1; it2 < arguments.end(); it2++ ) {
+    // Compute similarity scores
+    for ( std::vector<struct targs>::iterator it1 = thread_arguments.begin(); it1 < thread_arguments.end(); it1++ ) { 
+        for ( std::vector<struct targs>::iterator it2 = it1+1; it2 < thread_arguments.end(); it2++ ) {
             
-            std::vector<uint> set1, set2;
-            std::vector<size_t> counts1, counts2;
-            initializeSetAndCounts( it1->lcp_cores, set1, counts1 );
-            initializeSetAndCounts( it2->lcp_cores, set2, counts2 );
+            size_t interSize, unionSize;
+            calculateIntersectionAndUnionSizes( *it1, *it2, program_arguments, interSize, unionSize );
 
-            size_t interSize = 0, unionSize = 0;
+            double jaccard_similarity = calculateJaccardSimilarity( interSize, unionSize );
+            double dice_similarity = calculateDiceSimilarity( interSize, *it1, *it2, program_arguments );
+            double distance_similarity = calculateNormalizedVectorSimilarity( *it1, *it2 );
 
-            if ( calculateSet ) {
-                calculateIntersectionAndUnionSizes( set1, set2, interSize, unionSize);
-            }
-            else {
-                calculateIntersectionAndUnionSizes( it1->lcp_cores, it2->lcp_cores, interSize, unionSize);
-            }
-            
-            double depth1 = 1;
-            double depth2 = static_cast<double>(it2->size) / static_cast<double>(it1->size);
-            
-            double jaccard_similarity = calculateJaccardSimilarity(interSize, unionSize);
-            double dice_similarity = calculateDiceSimilarity(interSize, it1->lcp_cores.size(), it2->lcp_cores.size());
-            double distance_similarity = calculateNormalizedVectorSimilarity(set1, set2, depth1, depth2);
+            dice[it1 - thread_arguments.begin()][it2 - thread_arguments.begin()] = dice_similarity;
+            jaccard[it1 - thread_arguments.begin()][it2 - thread_arguments.begin()] = jaccard_similarity;
+            distance[it1 - thread_arguments.begin()][it2 - thread_arguments.begin()] = distance_similarity;
 
-            if ( verbose ) {
-                log(INFO, "Similarity metrics for %s and %s", it1->infilename.c_str(), it2->infilename.c_str());
-                log(INFO, "Intersection Size: %d, Union Size: %d", interSize, unionSize);
-                log(INFO, "Depth1: %f, Depth 2: %f", depth1, depth2);
-            }
-
-            dice[it1 - arguments.begin()][it2 - arguments.begin()] = dice_similarity;
-            jaccard[it1 - arguments.begin()][it2 - arguments.begin()] = jaccard_similarity;
-            distance[it1 - arguments.begin()][it2 - arguments.begin()] = distance_similarity;
-            dice[it2 - arguments.begin()][it1 - arguments.begin()] = dice_similarity;
-            jaccard[it2 - arguments.begin()][it1 - arguments.begin()] = jaccard_similarity;
-            distance[it2 - arguments.begin()][it1 - arguments.begin()] = distance_similarity;
+            // set values to transposed locations
+            dice[it2 - thread_arguments.begin()][it1 - thread_arguments.begin()] = dice_similarity;
+            jaccard[it2 - thread_arguments.begin()][it1 - thread_arguments.begin()] = jaccard_similarity;
+            distance[it2 - thread_arguments.begin()][it1 - thread_arguments.begin()] = distance_similarity;
         }
     }
 
+    log(INFO, "Writing distance matrices to files...");
+    
+    // Write outputs to files
     std::fstream dice_out, jaccard_out, distance_out;
-    dice_out.open( arguments[0].prefix + ".dice", std::ios::out );
-    jaccard_out.open( arguments[0].prefix + ".jaccard", std::ios::out );
-    distance_out.open( arguments[0].prefix + ".ns", std::ios::out );
+    dice_out.open( program_arguments.prefix + ".dice.phy", std::ios::out );
+    jaccard_out.open( program_arguments.prefix + ".jaccard.phy", std::ios::out );
+    distance_out.open( program_arguments.prefix + ".ns.phy", std::ios::out );
 
     if ( dice_out.is_open() ) {  
+
+        dice_out << numGenomes << std::endl;
         dice_out << std::setprecision(15);
-        for(size_t i = 0; i < arguments.size(); i++ ) {
-            for(size_t j = 0; j < arguments.size()-1; j++ ) {
-                dice_out << dice[i][j] << ",";
+        
+        for(size_t i = 0; i < numGenomes; i++ ) {
+            
+            dice_out << thread_arguments[i].shortName;  
+
+            for(size_t j = 0; j < numGenomes; j++ ) {
+                dice_out << std::fixed << std::setprecision(15) << " " << 1-dice[i][j];
             }
-            dice_out << dice[i][arguments.size()-1] << std::endl;
+            dice_out << std::endl;
         }
         dice_out.close();
     }
     
     if ( jaccard_out.is_open() ) {  
+
+        jaccard_out << numGenomes << std::endl;
         jaccard_out << std::setprecision(15);
-        for(size_t i = 0; i < arguments.size(); i++ ) {
-            for(size_t j = 0; j < arguments.size()-1; j++ ) {
-                jaccard_out << jaccard[i][j] << ",";
+
+        for(size_t i = 0; i < numGenomes; i++ ) {
+            
+            jaccard_out << thread_arguments[i].shortName;  
+
+            for(size_t j = 0; j < numGenomes; j++ ) {
+                jaccard_out << std::fixed << std::setprecision(15) << " " << 1-jaccard[i][j];
             }
-            jaccard_out << jaccard[i][arguments.size()-1] << std::endl;
+            jaccard_out << std::endl;
         }
         jaccard_out.close();
     }
 
     if ( distance_out.is_open() ) {  
+
+        distance_out << numGenomes << std::endl;
         distance_out << std::setprecision(15);
-        for(size_t i = 0; i < arguments.size(); i++ ) {
-            for(size_t j = 0; j < arguments.size()-1; j++ ) {
-                distance_out << distance[i][j] << ",";
+
+        for(size_t i = 0; i < numGenomes; i++ ) {
+            
+            distance_out << thread_arguments[i].shortName;  
+
+            for(size_t j = 0; j < numGenomes; j++ ) {
+                distance_out << std::fixed << std::setprecision(15) << ' ' << 1-distance[i][j];
             }
-            distance_out << distance[i][arguments.size()-1] << std::endl;
+            distance_out << std::endl;
         }
         distance_out.close();
     }
