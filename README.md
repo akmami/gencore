@@ -30,7 +30,7 @@ These cores enable highly accurate comparison of genomes to evaluate distances a
 
 - Access to a Unix-like environment (Linux, macOS).
 
-- `htslib`: Required for reading BAM and FASTQ files.
+- `htslib v64648`: Required for reading BAM and FASTQ files.
 
 - `lcptools`: Required for locally consistent parsing.
 
