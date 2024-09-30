@@ -7,4 +7,9 @@ enum program_mode {
     BAM
 };
 
+enum data_type {
+    SET,
+    VECTOR
+};
+
 #endif
