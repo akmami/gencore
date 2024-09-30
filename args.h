@@ -1,22 +1,32 @@
 #ifndef ARGS_H
 #define ARGS_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include "program_mode.h"
 
-struct args {
+
+struct pargs {
     program_mode mode;
+    data_type type;
     bool readCores;
-    std::string infilename;
     bool writeCores;
-    std::string outfilename;
     std::string prefix;
     size_t threadNumber;
     size_t lcpLevel;
-    std::vector<uint> lcp_cores;
-    size_t size;
     bool verbose;
 };
+
+
+struct targs {
+    std::string inFileName;
+    std::string outFileName;
+    std::string shortName;
+    std::vector<uint32_t> cores;
+    std::vector<size_t> counts;
+    size_t size;
+};
+
 
 #endif
