@@ -1,9 +1,9 @@
 #include "rbam.h"
 
 
-void read_bam( args& arguments ) {
+void read_bam( struct targs& arguments, const struct pargs& program_arguments ) {
     
-    chtslib c(arguments.infilename.c_str());
+    chtslib c(arguments.inFileName.c_str());
 
     bam1_t* aln = bam_init1();
 

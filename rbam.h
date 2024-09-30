@@ -9,6 +9,6 @@
 #include "lps.h"
 #include "chtslib.h"
 
-void read_bam( args& arguments );
+void read_bam( struct targs& arguments, const struct pargs& program_arguments );
 
 #endif

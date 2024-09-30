@@ -14,16 +14,16 @@ std::mutex results_mutex; // mutex for protecting access to the results vector
  * the shared vector periodically.
  *
  * @param task_queue The thread-safe queue from which tasks (genomic reads) are retrieved.
- * @param lcp_cores A shared vector to store the labels of LCP cores extracted from the reads.
+ * @param cores A shared vector to store the labels of LCP cores extracted from the reads.
  * @param lcp_level The depth of analysis for extracting LCP cores from the reads.
  */
-void process_read( ThreadSafeQueue<Task>& task_queue, std::vector<uint>& lcp_cores, int lcp_level ) {
-    std::vector<uint> local_cores;
+void process_read( ThreadSafeQueue<Task>& task_queue, std::vector<uint32_t>& cores, const int lcp_level ) {
+    std::vector<uint32_t> local_cores;
     Task task;
 
     auto merge_results = [&]() {
         std::lock_guard<std::mutex> lock(results_mutex);
-        lcp_cores.insert(lcp_cores.end(), local_cores.begin(), local_cores.end());
+        cores.insert(cores.end(), local_cores.begin(), local_cores.end());
         local_cores.clear();
     };
 
@@ -32,7 +32,7 @@ void process_read( ThreadSafeQueue<Task>& task_queue, std::vector<uint>& lcp_cor
         lcp::lps *lcp = new lcp::lps(task.read);
         lcp->deepen(lcp_level);
         
-        for ( std::vector<lcp::core*>::iterator it = lcp->cores.begin(); it != lcp->cores.end(); it++ ) {
+        for ( std::vector<lcp::core*>::iterator it = lcp->cores->begin(); it != lcp->cores->end(); it++ ) {
             local_cores.push_back( (*it)->label );
         }
 
@@ -44,7 +44,7 @@ void process_read( ThreadSafeQueue<Task>& task_queue, std::vector<uint>& lcp_cor
         lcp = new lcp::lps(task.read);
         lcp->deepen(lcp_level);
         
-        for ( std::vector<lcp::core*>::iterator it = lcp->cores.begin(); it != lcp->cores.end(); it++ ) {
+        for ( std::vector<lcp::core*>::iterator it = lcp->cores->begin(); it != lcp->cores->end(); it++ ) {
             local_cores.push_back( (*it)->label );
         }
 
@@ -75,24 +75,24 @@ void process_read( ThreadSafeQueue<Task>& task_queue, std::vector<uint>& lcp_cor
  * @param filename Path to the input file containing genomic sequences.
  * @param infile Reference to an open GzFile object for reading the input file.
  * @param lcp_level The depth of LCP analysis for extracting cores from sequences.
- * @param lcp_cores A reference to a shared vector where extracted LCP cores are aggregated.
+ * @param cores A reference to a shared vector where extracted LCP cores are aggregated.
  * @param read_count Reference to a variable that will hold the total number of processed reads.
  * @param total_length Reference to a variable that will hold the combined length of all reads.
  * @param thread_number The number of worker threads to use for processing.
  */
-void read_fastq( args& arguments ) {
+void read_fastq( struct targs& thread_arguments, const struct pargs program_arguments ) {
 
-    GzFile infile( arguments.infilename.c_str(), "rb" );
+    GzFile infile( thread_arguments.inFileName.c_str(), "rb" );
 
     ThreadSafeQueue<Task> task_queue;
     std::vector<std::thread> workers;
 
     // start worker threads
-    for (size_t i = 0; i < arguments.threadNumber; ++i) {
-        workers.emplace_back(process_read, std::ref(task_queue), std::ref(arguments.lcp_cores), arguments.lcpLevel);
+    for (size_t i = 0; i < program_arguments.threadNumber; ++i) {
+        workers.emplace_back(process_read, std::ref(task_queue), std::ref(thread_arguments.cores), std::ref(program_arguments.lcpLevel));
     }
 
-    arguments.verbose && std::cout << "Processing is started for " << arguments.infilename << std::endl;
+    program_arguments.verbose && std::cout << "Processing is started for " << thread_arguments.inFileName << std::endl;
     
     // variables
     char buffer[BUFFERSIZE];
@@ -134,5 +134,5 @@ void read_fastq( args& arguments ) {
         }
     }
 
-    generateMinhashSignature(arguments.lcp_cores);
+    generateSignature( thread_arguments.cores );
 };
